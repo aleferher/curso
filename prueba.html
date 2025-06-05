@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Monitor de Donaciones</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.4/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+  <h1>💰 Donaciones Recibidas</h1>
+  <p id="estado">Conectando a Metamask...</p>
+  <ul id="event-log"></ul>
+
+  <script>
+    window.onload = async function () {
+      const estado = document.getElementById("estado");
+
+      // Verificamos si Metamask está disponible
+      if (typeof window.ethereum === "undefined") {
+        estado.textContent = "⚠️ Metamask no está instalado o habilitado.";
+        return;
+      }
+
+      try {
+        // Inicializamos ethers desde el objeto global
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+
+        const contractAddress = "0xe7e1e76be4ff0d80fabecfa249a99e93012adb91"; // <-- Reemplazá con tu contrato
+        const abi = [
+          "event DonacionRecibida(address from, uint amount)"
+        ];
+        const contract = new ethers.Contract(contractAddress, abi, provider);
+
+        estado.textContent = "✅ Escuchando eventos DonacionRecibida...";
+
+        contract.on("DonacionRecibida", (from, amount) => {
+          const log = document.getElementById("event-log");
+          const li = document.createElement("li");
+          li.textContent = `🧑‍💻 ${from} donó ${ethers.formatEther(amount)} ETH`;
+          log.prepend(li);
+        });
+
+      } catch (err) {
+        estado.textContent = "❌ Error al conectar con Metamask: " + err.message;
+        console.error(err);
+      }
+    };
+  </script>
+</body>
+</html>
